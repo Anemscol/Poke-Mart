@@ -18,7 +18,10 @@
     "ConfirmTitle": "Confirm purchase",
     "ConfirmBody": "{actor} buys {qty}× {item} for {total}?",
     "Bought": "Bought {qty}× {item} for {total}.",
-    "Chat": { "Purchased": "<strong>{actor}</strong> bought {qty}× <em>{item}</em> for {total}." },
+    "Chat": {
+      "Purchased": "<strong>{actor}</strong> bought {qty}× <em>{item}</em> for {total}.",
+      "Sold": "<strong>{actor}</strong> sold {qty}× <em>{item}</em> for {total}."
+    },
     "NewMart": "New mart",
     "NewMartName": "New Poké Mart",
     "OpenToPlayers": "Open to players",
@@ -44,7 +47,10 @@
       "NoMoneyField": "{actor} has no money field at {path}. Check the Poké Mart module settings.",
       "NotEnough": "Not enough money: this costs {total} and you have {money}.",
       "ItemMissing": "{item} no longer exists. Ask your GM to update the mart.",
-      "GrantFailed": "Couldn't give {item} to {actor}. Your money was refunded."
+      "GrantFailed": "Couldn't give {item} to {actor}. Your money was refunded.",
+      "ItemGone": "{item} is no longer in {actor}'s inventory.",
+      "NotEnoughItems": "{actor} only has {have} of {item}.",
+      "SellFailed": "Couldn't sell {item}. Nothing was changed."
     },
     "Settings": {
       "moneyPath": {
@@ -70,7 +76,26 @@
       "confirmPurchases": {
         "Name": "Confirm before buying",
         "Hint": "Ask for confirmation before each purchase. This setting is per user."
+      },
+      "descriptionPath": {
+        "Name": "Item description field",
+        "Hint": "Where an item's description is stored, shown when a player clicks an item in the shop. Common alternatives are tried if this is empty."
       }
-    }
+    },
+    "TabBuy": "Buy",
+    "TabSell": "Sell",
+    "Sell": "Sell",
+    "Each": "each",
+    "Owned": "You own this many",
+    "NothingToSell": "You have nothing this mart will buy.",
+    "ConfirmSellTitle": "Confirm sale",
+    "SellConfirmBody": "{actor} sells {qty}× {item} for {total}?",
+    "Sold": "Sold {qty}× {item} for {total}.",
+    "SellEnabled": "Buy items back from players",
+    "SellRatio": "Pays",
+    "SellAny": "Also buy items this mart doesn't sell (uses the item's own price)",
+    "ShowDescription": "Show or hide description",
+    "NoDescription": "No description available.",
+    "LoadingDescription": "Loading…"
   }
 }

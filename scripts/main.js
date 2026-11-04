@@ -63,6 +63,14 @@ Hooks.on("updateActor", () => {
   for (const app of openApps) if (app instanceof MartApp) app.render(false);
 });
 
+// ...or when items are added, changed or removed on a character (keeps the Sell tab current)
+for (const hook of ["createItem", "updateItem", "deleteItem"]) {
+  Hooks.on(hook, (item) => {
+    if (!item.parent) return;
+    for (const app of openApps) if (app instanceof MartApp) app.render(false);
+  });
+}
+
 // Buttons at the top of the Actors sidebar tab
 Hooks.on("renderActorDirectory", (app, html) => {
   const root = html instanceof HTMLElement ? html : html[0];

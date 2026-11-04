@@ -74,3 +74,27 @@
 /* Chat card */
 .pokemart-chat { padding: 0.2rem 0; }
 .pokemart-chat i { color: var(--mart-blue); margin-right: 0.3rem; }
+
+/* Tabs (Buy / Sell) */
+.pokemart-tabs { display: flex; gap: 0; margin: 0.6rem 0.75rem 0; border-bottom: 2px solid var(--mart-blue); }
+.pokemart-tabs .tab { flex: 0 0 auto; width: auto; padding: 0.25rem 1.2rem; background: transparent; border: 0; border-radius: 3px 3px 0 0; color: var(--mart-ink); font-weight: 600; }
+.pokemart-tabs .tab.active { background: var(--mart-blue); color: #fff; }
+
+/* Item rows with expandable description */
+.pokemart-item { display: block; padding: 0; }
+.pokemart-item .row { display: flex; align-items: center; gap: 0.6rem; padding: 0.4rem 0.5rem; }
+.pokemart-item .item-name { cursor: pointer; }
+.pokemart-item .item-name i { font-size: 0.8em; opacity: 0.5; margin-left: 0.2rem; }
+.pokemart-item.open .item-name i { opacity: 1; color: var(--mart-blue); }
+.pokemart-item .have { opacity: 0.7; white-space: nowrap; }
+.pokemart-item .price small { font-weight: 400; opacity: 0.7; }
+.pokemart-item button.sell { flex: 0 0 4.5rem; width: 4.5rem; background: var(--mart-red); color: #fff; border: 0; }
+.pokemart-item button.sell:hover:not(:disabled) { filter: brightness(0.9); }
+.pokemart-item .item-desc { margin: 0 0.5rem 0.5rem 3.1rem; padding: 0.4rem 0.7rem; border-left: 3px solid var(--mart-blue); background: #fff; font-size: 0.92em; line-height: 1.4; }
+.pokemart-item .item-desc p { margin: 0 0 0.4em; }
+.pokemart-item .item-desc p:last-child { margin-bottom: 0; }
+
+/* Buy-back options in the manager */
+.pokemart-manager .mart-sell { display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; align-items: center; margin-top: 0.5rem; }
+.pokemart-manager .mart-sell label { display: flex; align-items: center; gap: 0.3rem; }
+.pokemart-manager .mart-sell input[type=number] { width: 4rem; }
