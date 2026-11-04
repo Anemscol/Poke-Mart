@@ -4,8 +4,12 @@
     <ul>
       {{#each marts}}
       <li class="mart-entry {{#if selected}}active{{/if}}" data-mart-id="{{id}}">
-        <span>{{name}}</span>
+        <span class="mart-name">{{name}}</span>
         {{#unless open}}<i class="fas fa-lock" title="{{localize 'POKEMART.Closed'}}"></i>{{/unless}}
+        <span class="mart-move">
+          <a class="move-up {{#if first}}disabled{{/if}}" title="{{localize 'POKEMART.MoveUp'}}"><i class="fas fa-chevron-up"></i></a>
+          <a class="move-down {{#if last}}disabled{{/if}}" title="{{localize 'POKEMART.MoveDown'}}"><i class="fas fa-chevron-down"></i></a>
+        </span>
       </li>
       {{/each}}
     </ul>
@@ -25,6 +29,7 @@
         {{#if sell.enabled}}
         <label>{{localize "POKEMART.SellRatio"}} <input type="number" name="sellRatio" min="0" max="100" step="1" value="{{sell.ratio}}"> %</label>
         <label><input type="checkbox" name="sellAny" {{checked sell.any}}> {{localize "POKEMART.SellAny"}}</label>
+        <label title="{{localize 'POKEMART.SellOnlyHint'}}"><input type="checkbox" name="hideBuy" {{checked mart.hideBuy}}> {{localize "POKEMART.SellOnly"}}</label>
         {{/if}}
       </div>
 

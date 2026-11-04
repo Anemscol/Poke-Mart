@@ -1,4 +1,4 @@
-import { MODULE_ID, openApps, getMarts, saveMarts, cfg, readPrice, rawDescription, entryFromItem, addEntries, confirmDialog, martSell } from "./data.js";
+import { MODULE_ID, openApps, getMarts, saveMarts, cfg, readPrice, rawDescription, entryFromItem, addEntries, confirmDialog, martSell, sortedMarts } from "./data.js";
 import { MartApp } from "./mart-app.js";
 
 const AppV1 = foundry.appv1?.api?.Application ?? Application;
@@ -32,10 +32,10 @@ export class ManagerApp extends AppV1 {
   }
 
   getData() {
-    const marts = Object.values(getMarts()).sort((a, b) => a.name.localeCompare(b.name));
+    const marts = sortedMarts();
     if (!marts.some((m) => m.id === this.selectedId)) this.selectedId = marts[0]?.id ?? null;
     return {
-      marts: marts.map((m) => ({ ...m, selected: m.id === this.selectedId })),
+      marts: marts.map((m, i) => ({ ...m, selected: m.id === this.selectedId, first: i === 0, last: i === marts.length - 1 })),
       mart: marts.find((m) => m.id === this.selectedId) ?? null,
       sell: martSell(marts.find((m) => m.id === this.selectedId)),
       currency: cfg("currencySymbol")
@@ -64,6 +64,13 @@ export class ManagerApp extends AppV1 {
 
     html.find(".new-mart").on("click", () => this._newMart());
 
+    html.find(".move-up, .move-down").on("click", (ev) => {
+      ev.stopPropagation();
+      if (ev.currentTarget.classList.contains("disabled")) return;
+      const id = ev.currentTarget.closest(".mart-entry").dataset.martId;
+      this._moveMart(id, ev.currentTarget.classList.contains("move-up") ? -1 : 1);
+    });
+
     html.find(".mart-entry").on("click", (ev) => {
       this.selectedId = ev.currentTarget.dataset.martId;
       this.render(false);
@@ -82,6 +89,11 @@ export class ManagerApp extends AppV1 {
     html.find("input[name=sellEnabled]").on("change", (ev) => {
       const v = ev.currentTarget.checked;
       this._mutate((m) => (m.sellEnabled = v));
+    });
+
+    html.find("input[name=hideBuy]").on("change", (ev) => {
+      const v = ev.currentTarget.checked;
+      this._mutate((m) => (m.hideBuy = v));
     });
 
     html.find("input[name=sellRatio]").on("change", (ev) => {
@@ -121,8 +133,20 @@ export class ManagerApp extends AppV1 {
   async _newMart() {
     const marts = getMarts();
     const id = foundry.utils.randomID();
-    marts[id] = { id, name: game.i18n.localize("POKEMART.NewMartName"), open: true, items: [] };
+    marts[id] = { id, name: game.i18n.localize("POKEMART.NewMartName"), open: true, items: [], order: Object.keys(marts).length };
     this.selectedId = id;
+    await saveMarts(marts);
+  }
+
+  /** Move a mart one place up (-1) or down (+1) in the list. This is the order players see in "Choose a Mart". */
+  async _moveMart(id, dir) {
+    const marts = getMarts();
+    const list = sortedMarts(marts);
+    const i = list.findIndex((m) => m.id === id);
+    const j = i + dir;
+    if (i < 0 || j < 0 || j >= list.length) return;
+    [list[i], list[j]] = [list[j], list[i]];
+    list.forEach((m, n) => (m.order = n));
     await saveMarts(marts);
   }
 

@@ -98,3 +98,11 @@
 .pokemart-manager .mart-sell { display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; align-items: center; margin-top: 0.5rem; }
 .pokemart-manager .mart-sell label { display: flex; align-items: center; gap: 0.3rem; }
 .pokemart-manager .mart-sell input[type=number] { width: 4rem; }
+
+/* Mart ordering in the manager */
+.pokemart-manager .mart-entry { align-items: center; gap: 0.4rem; }
+.pokemart-manager .mart-entry .mart-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pokemart-manager .mart-move { display: flex; gap: 0.35rem; }
+.pokemart-manager .mart-move a { color: inherit; opacity: 0.55; }
+.pokemart-manager .mart-move a:hover { opacity: 1; }
+.pokemart-manager .mart-move a.disabled { opacity: 0.15; pointer-events: none; }

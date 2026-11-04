@@ -96,6 +96,10 @@
     "SellAny": "Also buy items this mart doesn't sell (uses the item's own price)",
     "ShowDescription": "Show or hide description",
     "NoDescription": "No description available.",
-    "LoadingDescription": "Loading…"
+    "LoadingDescription": "Loading…",
+    "MoveUp": "Move up",
+    "MoveDown": "Move down",
+    "SellOnly": "Sell only (hide the Buy tab)",
+    "SellOnlyHint": "Players can only sell here. If this mart has no items listed, also tick the option to buy items it doesn't sell."
   }
 }
