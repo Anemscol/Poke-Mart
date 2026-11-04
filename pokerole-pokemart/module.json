@@ -1,0 +1,14 @@
+{
+  "id": "pokerole-pokemart",
+  "title": "Pokerole Poké Mart",
+  "description": "A Poké Mart for the Pokerole system. The GM builds marts from Items compendiums; players buy items and the cost is deducted from their character's money automatically.",
+  "version": "1.0.0",
+  "authors": [{ "name": "Your Name" }],
+  "compatibility": { "minimum": "11", "verified": "13" },
+  "relationships": {
+    "systems": [{ "id": "pokerole", "type": "system" }]
+  },
+  "esmodules": ["scripts/main.js"],
+  "styles": ["styles/pokemart.css"],
+  "languages": [{ "lang": "en", "name": "English", "path": "lang/en.json" }]
+}
