@@ -1,11 +1,13 @@
 import {
   MODULE_ID, openApps, getMarts, cfg, readNumber, confirmDialog,
-  martSell, sellUnitPrice, rawDescription, enrichDescription
+  martSell, sellUnitPrice, rawDescription, enrichDescription, martBogo, cartReward
 } from "./data.js";
-import { purchase, sell } from "./purchase.js";
+import { checkout, sell } from "./purchase.js";
 
 const AppV1 = foundry.appv1?.api?.Application ?? Application;
 const esc = (s) => Handlebars.escapeExpression(s);
+const T = (k, d) => (d ? game.i18n.format(k, d) : game.i18n.localize(k));
+const clampQty = (v, max = 99) => Math.min(max, Math.max(1, Math.floor(Number(v)) || 1));
 
 /** The player-facing shop window. */
 export class MartApp extends AppV1 {
@@ -15,7 +17,8 @@ export class MartApp extends AppV1 {
     this.actorId = null;
     this.tab = "buy";
     this.search = "";
-    this.qty = {};
+    this.qty = {}; // quantity typed in each row
+    this.cart = new Map(); // item uuid -> quantity
     this.expanded = new Set(); // rows whose description is open
     this.descCache = new Map();
   }
@@ -24,14 +27,14 @@ export class MartApp extends AppV1 {
     return foundry.utils.mergeObject(super.defaultOptions, {
       classes: ["pokemart"],
       template: `modules/${MODULE_ID}/templates/mart.hbs`,
-      width: 580,
-      height: 660,
+      width: 620,
+      height: 720,
       resizable: true
     });
   }
 
   get title() {
-    return getMarts()[this.martId]?.name ?? game.i18n.localize("POKEMART.Title");
+    return getMarts()[this.martId]?.name ?? T("POKEMART.Title");
   }
 
   render(...args) {
@@ -44,12 +47,31 @@ export class MartApp extends AppV1 {
     return super.close(options);
   }
 
+  /** Keep the item list's scroll position across re-renders. */
+  async _render(...args) {
+    const scroll = this.element?.[0]?.querySelector(".pokemart-items")?.scrollTop ?? 0;
+    await super._render(...args);
+    const list = this.element?.[0]?.querySelector(".pokemart-items");
+    if (list) list.scrollTop = scroll;
+  }
+
   /** Characters the current user can spend money for. */
   _buyers() {
     const path = cfg("moneyPath");
     return game.actors
       .filter((a) => a.isOwner && readNumber(a, path) !== null)
       .sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  /** Cart lines as [{ entry, qty }], dropping anything the GM has since removed from the mart. */
+  _cartLines(mart) {
+    const lines = [];
+    for (const [uuid, qty] of [...this.cart]) {
+      const entry = mart?.items.find((i) => i.uuid === uuid);
+      if (!entry) this.cart.delete(uuid);
+      else lines.push({ entry, qty });
+    }
+    return lines;
   }
 
   getData() {
@@ -93,6 +115,35 @@ export class MartApp extends AppV1 {
         .sort((a, b) => a.name.localeCompare(b.name));
     }
 
+    // Promotion banner
+    const bogo = martBogo(mart);
+    const bogoValid = bogo.enabled && (bogo.same || bogo.item);
+    let bogoBanner = "";
+    if (bogoValid) {
+      bogoBanner = bogo.same
+        ? T("POKEMART.BogoBannerSame", { n: bogo.qty, count: bogo.count })
+        : T("POKEMART.BogoBannerItem", { n: bogo.qty, count: bogo.count, item: bogo.item.name });
+      if (bogo.repeat) bogoBanner += " " + T("POKEMART.BogoRepeatNote", { n: bogo.qty });
+    }
+
+    // Cart
+    const lines = this._cartLines(mart);
+    const itemCount = lines.reduce((n, l) => n + l.qty, 0);
+    const cartTotal = lines.reduce((n, l) => n + l.entry.price * l.qty, 0);
+    const reward = cartReward(mart, lines);
+    const cart = {
+      lines: lines.map((l) => ({
+        key: l.entry.uuid, name: l.entry.name, qty: l.qty, currency, lineTotal: l.entry.price * l.qty
+      })),
+      count: itemCount,
+      total: cartTotal,
+      tooMuch: cartTotal > money,
+      free: reward ? { label: `${reward.count}× ${reward.name}` } : null,
+      hint: bogoValid && !reward && itemCount > 0 && itemCount < bogo.qty
+        ? T("POKEMART.BogoAlmost", { n: bogo.qty - itemCount })
+        : ""
+    };
+
     return {
       missing: !mart,
       closed: !!mart && !mart.open && !game.user.isGM,
@@ -106,6 +157,7 @@ export class MartApp extends AppV1 {
       search: this.search,
       sellOn,
       showTabs: sellOn && !sellOnly,
+      bogoBanner,
       isBuy: this.tab === "buy",
       isSell: this.tab === "sell",
       items: (mart?.items ?? []).map((e) => ({
@@ -113,9 +165,10 @@ export class MartApp extends AppV1 {
         key: e.uuid,
         currency,
         qty: this.qty[e.uuid] ?? 1,
-        expensive: e.price > money
+        inCart: this.cart.get(e.uuid) ?? 0
       })),
-      sellItems
+      sellItems,
+      cart
     };
   }
 
@@ -144,7 +197,7 @@ export class MartApp extends AppV1 {
     });
     applyFilter();
 
-    html.find("input.qty").on("input", (ev) => {
+    html.find(".pokemart-item input.qty").on("input", (ev) => {
       const li = ev.currentTarget.closest(".pokemart-item");
       this.qty[li.dataset.key] = ev.currentTarget.value;
     });
@@ -155,7 +208,28 @@ export class MartApp extends AppV1 {
       if (this.expanded.has(li.dataset.key)) this._showDescription(li);
     });
 
-    html.find("button.buy").on("click", (ev) => this._onBuy(ev));
+    // Cart
+    html.find("button.add-to-cart").on("click", (ev) => {
+      const li = ev.currentTarget.closest(".pokemart-item");
+      const key = li.dataset.key;
+      this.cart.set(key, Math.min(99, (this.cart.get(key) ?? 0) + this._readQty(li)));
+      delete this.qty[key];
+      this.render(false);
+    });
+    html.find("input.cart-qty").on("change", (ev) => {
+      this.cart.set(ev.currentTarget.closest("li").dataset.key, clampQty(ev.currentTarget.value));
+      this.render(false);
+    });
+    html.find(".cart-remove").on("click", (ev) => {
+      this.cart.delete(ev.currentTarget.closest("li").dataset.key);
+      this.render(false);
+    });
+    html.find(".clear-cart").on("click", () => {
+      this.cart.clear();
+      this.render(false);
+    });
+    html.find("button.checkout").on("click", (ev) => this._onCheckout(ev));
+
     html.find("button.sell").on("click", (ev) => this._onSell(ev));
   }
 
@@ -178,9 +252,9 @@ export class MartApp extends AppV1 {
     const panel = li.querySelector(".item-desc");
     li.classList.add("open");
     panel.hidden = false;
-    if (!this.descCache.has(li.dataset.key)) panel.textContent = game.i18n.localize("POKEMART.LoadingDescription");
+    if (!this.descCache.has(li.dataset.key)) panel.textContent = T("POKEMART.LoadingDescription");
     const html = await this._loadDescription(li.dataset.key);
-    panel.innerHTML = html || `<em>${game.i18n.localize("POKEMART.NoDescription")}</em>`;
+    panel.innerHTML = html || `<em>${T("POKEMART.NoDescription")}</em>`;
   }
 
   async _loadDescription(key) {
@@ -204,29 +278,35 @@ export class MartApp extends AppV1 {
     return html;
   }
 
-  /* ---------- Buying & selling ---------- */
+  /* ---------- Checkout & selling ---------- */
 
-  async _onBuy(ev) {
+  async _onCheckout(ev) {
     const button = ev.currentTarget;
-    const li = button.closest(".pokemart-item");
-    const entry = getMarts()[this.martId]?.items.find((i) => i.uuid === li.dataset.key);
+    const mart = getMarts()[this.martId];
     const actor = game.actors.get(this.actorId);
-    if (!entry || !actor) return;
+    if (!mart || !actor) return;
 
-    const qty = this._readQty(li);
-    const total = entry.price * qty;
+    const lines = this._cartLines(mart);
+    if (!lines.length) return;
+
+    const count = lines.reduce((n, l) => n + l.qty, 0);
+    const total = lines.reduce((n, l) => n + l.entry.price * l.qty, 0);
+    const reward = cartReward(mart, lines);
+    const freeNote = reward ? " " + T("POKEMART.ConfirmFree", { free: esc(`${reward.count}× ${reward.name}`) }) : "";
+
     button.disabled = true;
     try {
       if (cfg("confirmPurchases")) {
         const ok = await confirmDialog(
-          game.i18n.localize("POKEMART.ConfirmTitle"),
-          game.i18n.format("POKEMART.ConfirmBody", {
-            actor: esc(actor.name), qty, item: esc(entry.name), total: `${cfg("currencySymbol")}${total}`
+          T("POKEMART.ConfirmTitle"),
+          T("POKEMART.CheckoutConfirmBody", {
+            actor: esc(actor.name), n: count, total: `${cfg("currencySymbol")}${total}`, free: freeNote
           })
         );
         if (!ok) return;
       }
-      if (await purchase({ entry, actor, qty })) this.qty[entry.uuid] = 1;
+      const { delivered } = await checkout({ lines, actor, mart });
+      for (const uuid of delivered) this.cart.delete(uuid);
     } finally {
       this.render(false);
     }
@@ -248,14 +328,14 @@ export class MartApp extends AppV1 {
     try {
       if (cfg("confirmPurchases")) {
         const ok = await confirmDialog(
-          game.i18n.localize("POKEMART.ConfirmSellTitle"),
-          game.i18n.format("POKEMART.SellConfirmBody", {
+          T("POKEMART.ConfirmSellTitle"),
+          T("POKEMART.SellConfirmBody", {
             actor: esc(actor.name), qty, item: esc(item.name), total: `${cfg("currencySymbol")}${total}`
           })
         );
         if (!ok) return;
       }
-      if (await sell({ actor, itemId: item.id, qty, unit })) this.qty[li.dataset.key] = 1;
+      if (await sell({ actor, itemId: item.id, qty, unit })) delete this.qty[li.dataset.key];
     } finally {
       this.render(false);
     }
@@ -263,7 +343,6 @@ export class MartApp extends AppV1 {
 
   _readQty(li) {
     const input = li.querySelector("input.qty");
-    const max = Number(input.max) || 99;
-    return Math.min(max, Math.max(1, Math.floor(Number(input.value) || 1)));
+    return clampQty(input.value, Number(input.max) || 99);
   }
 }

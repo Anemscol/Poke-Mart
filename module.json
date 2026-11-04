@@ -2,10 +2,10 @@
   "id": "pokerole-pokemart",
   "title": "Pokerole Poké Mart",
   "manifest": "https://github.com/Anemscol/Poke-Mart/releases/latest/download/module.json",
-  "download": "https://github.com/Anemscol/Poke-Mart/releases/download/1.2.0/module.zip",
+  "download": "https://github.com/Anemscol/Poke-Mart/releases/download/1.3.0/module.zip",
   "description": "A Poké Mart for the Pokerole system. The GM builds marts from Items compendiums; players buy items and the cost is deducted from their character's money automatically.",
-  "version": "1.2.0",
-  "authors": [{ "name": "Your Name" }],
+  "version": "1.3.0",
+  "authors": [{ "name": "Anemscol" }],
   "compatibility": { "minimum": "11", "verified": "13" },
   "relationships": {
     "systems": [{ "id": "pokerole", "type": "system" }]

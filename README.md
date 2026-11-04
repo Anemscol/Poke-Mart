@@ -20,6 +20,9 @@ In a mart's editor, tick **Buy items back from players**. Then set what percenta
 
 **Sell-only marts:** with buy-back on, tick **Sell only (hide the Buy tab)** to make a mart players can only sell to. Such a mart needs no items listed; tick *Also buy items this mart doesn't sell* so it pays each item's own price.
 
+## Free-item promotion
+In a mart's editor, tick **Free-item promotion**. Set how many items the cart must hold at checkout (all items count together), and how many free items the player receives. The free item is either extra copies of the **cheapest item in the cart**, or a specific item you choose (drop it onto the box, or pick it from a compendium). A specific free item doesn't have to be on the mart's list. Tick *Repeat for every multiple* to scale the reward with the cart size. Players see a banner above the item list, and the cart shows the free item once it's earned.
+
 ## Mart order
 Use the up/down arrows next to each mart in the manager. That order is the one players see in the "Choose a Mart" popup.
 
@@ -27,8 +30,8 @@ Use the up/down arrows next to each mart in the manager. That order is the one p
 Players can click any item name, in the Buy or Sell tab, to show or hide its description. The description is read from the item's description field (see settings) and is also saved with each mart item when the GM adds it, so players can read it even without access to the compendium.
 
 ## Players
-Open the **Actors** tab and click **Poké Mart**. Choose a character, set a quantity, press Buy.
-The cost is deducted from the character's money and the item is added to their sheet. If the system tracks item quantities, bought items stack.
+Open the **Actors** tab and click **Poké Mart**. Choose a character, set a quantity, and press **Add** to put items in the cart. Edit quantities or remove items in the cart, then press **Check out**.
+The total is deducted from the character's money and the items are added to their sheet. If the system tracks item quantities, bought items stack.
 
 ## Macros
 ```js

@@ -13,14 +13,13 @@
     "NoBuyers": "None of your characters have a money field at <code>{path}</code>. Ask your GM to check the module settings.",
     "Search": "Search items…",
     "Quantity": "Quantity",
-    "Buy": "Buy",
     "EmptyMart": "Nothing for sale yet.",
     "ConfirmTitle": "Confirm purchase",
-    "ConfirmBody": "{actor} buys {qty}× {item} for {total}?",
-    "Bought": "Bought {qty}× {item} for {total}.",
+    "Bought": "Bought {items} for {total}.",
     "Chat": {
-      "Purchased": "<strong>{actor}</strong> bought {qty}× <em>{item}</em> for {total}.",
-      "Sold": "<strong>{actor}</strong> sold {qty}× <em>{item}</em> for {total}."
+      "Purchased": "<strong>{actor}</strong> bought {items} for {total}.",
+      "Sold": "<strong>{actor}</strong> sold {qty}× <em>{item}</em> for {total}.",
+      "PurchasedFree": "They also received {free} free!"
     },
     "NewMart": "New mart",
     "NewMartName": "New Poké Mart",
@@ -50,7 +49,9 @@
       "GrantFailed": "Couldn't give {item} to {actor}. Your money was refunded.",
       "ItemGone": "{item} is no longer in {actor}'s inventory.",
       "NotEnoughItems": "{actor} only has {have} of {item}.",
-      "SellFailed": "Couldn't sell {item}. Nothing was changed."
+      "SellFailed": "Couldn't sell {item}. Nothing was changed.",
+      "RewardMissing": "The free item {item} is no longer available, so it wasn't included.",
+      "RewardFailed": "Couldn't give the free item {item}. Let your GM know."
     },
     "Settings": {
       "moneyPath": {
@@ -100,6 +101,34 @@
     "MoveUp": "Move up",
     "MoveDown": "Move down",
     "SellOnly": "Sell only (hide the Buy tab)",
-    "SellOnlyHint": "Players can only sell here. If this mart has no items listed, also tick the option to buy items it doesn't sell."
+    "SellOnlyHint": "Players can only sell here. If this mart has no items listed, also tick the option to buy items it doesn't sell.",
+    "ConfirmFree": "They also get {free} free!",
+    "BoughtFree": "You also received {free} free!",
+    "BogoEnabled": "Free-item promotion (check out with enough items, get one free)",
+    "BogoBuyAtLeast": "When the cart holds at least",
+    "BogoInOne": "items at checkout,",
+    "BogoGet": "they receive",
+    "BogoFree": "free",
+    "BogoRepeat": "Repeat for every multiple of that many items",
+    "BogoSame": "The free item is the cheapest item in the cart",
+    "BogoDropHint": "Drop the free item here, or choose it from a compendium.",
+    "BogoChoose": "Choose free item…",
+    "BogoClear": "Clear",
+    "ChooseReward": "Choose the free item",
+    "UseAsReward": "Use as free item",
+    "BogoBannerSame": "Check out with {n} or more items and get {count} more of your cheapest item free!",
+    "BogoBannerItem": "Check out with {n} or more items and get {count}× {item} free!",
+    "BogoRepeatNote": "Repeats for every {n} items.",
+    "AddToCart": "Add",
+    "Cart": "Cart",
+    "CartEmpty": "Your cart is empty. Add items from the list above.",
+    "ClearCart": "Clear cart",
+    "RemoveFromCart": "Remove from cart",
+    "InCart": "In your cart",
+    "Total": "Total",
+    "Free": "Free",
+    "Checkout": "Check out",
+    "CheckoutConfirmBody": "{actor} buys {n} item(s) for {total}?{free}",
+    "BogoAlmost": "Add {n} more item(s) to earn a free item!"
   }
 }

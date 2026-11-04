@@ -29,6 +29,7 @@
     <input type="search" class="pokemart-search" placeholder="{{localize 'POKEMART.Search'}}" value="{{search}}">
 
     {{#if isBuy}}
+      {{#if bogoBanner}}<p class="bogo-banner"><i class="fas fa-gift"></i> {{bogoBanner}}</p>{{/if}}
       {{#unless mart.items.length}}<p class="notice">{{localize "POKEMART.EmptyMart"}}</p>{{/unless}}
       <ol class="pokemart-items">
         {{#each items}}
@@ -36,14 +37,44 @@
           <div class="row">
             <img src="{{img}}" width="36" height="36" alt="">
             <a class="item-name" title="{{localize 'POKEMART.ShowDescription'}}">{{name}} <i class="fas fa-circle-info"></i></a>
-            <span class="price {{#if expensive}}expensive{{/if}}">{{currency}}{{price}}</span>
+            {{#if inCart}}<span class="in-cart" title="{{localize 'POKEMART.InCart'}}"><i class="fas fa-shopping-cart"></i> {{inCart}}</span>{{/if}}
+            <span class="price">{{currency}}{{price}}</span>
             <input type="number" class="qty" value="{{qty}}" min="1" max="99" step="1" title="{{localize 'POKEMART.Quantity'}}">
-            <button type="button" class="buy">{{localize "POKEMART.Buy"}}</button>
+            <button type="button" class="add-to-cart"><i class="fas fa-cart-plus"></i> {{localize "POKEMART.AddToCart"}}</button>
           </div>
           <div class="item-desc" hidden></div>
         </li>
         {{/each}}
       </ol>
+
+      <section class="pokemart-cart">
+        <header>
+          <span><i class="fas fa-shopping-cart"></i> {{localize "POKEMART.Cart"}}{{#if cart.count}} <span class="cart-count">{{cart.count}}</span>{{/if}}</span>
+          {{#if cart.lines.length}}<a class="clear-cart">{{localize "POKEMART.ClearCart"}}</a>{{/if}}
+        </header>
+        {{#unless cart.lines.length}}
+          <p class="cart-empty">{{localize "POKEMART.CartEmpty"}}</p>
+        {{else}}
+          <ul class="cart-lines">
+            {{#each cart.lines}}
+            <li data-key="{{key}}">
+              <span class="name">{{name}}</span>
+              <input type="number" class="cart-qty" min="1" max="99" step="1" value="{{qty}}">
+              <span class="line-total">{{currency}}{{lineTotal}}</span>
+              <a class="cart-remove" title="{{localize 'POKEMART.RemoveFromCart'}}"><i class="fas fa-times"></i></a>
+            </li>
+            {{/each}}
+            {{#if cart.free}}
+            <li class="cart-free"><i class="fas fa-gift"></i> <span class="name">{{cart.free.label}}</span> <span class="line-total">{{localize "POKEMART.Free"}}</span></li>
+            {{/if}}
+          </ul>
+          {{#if cart.hint}}<p class="cart-hint">{{cart.hint}}</p>{{/if}}
+        {{/unless}}
+        <footer>
+          <span class="cart-total">{{localize "POKEMART.Total"}}: <strong class="{{#if cart.tooMuch}}expensive{{/if}}">{{currency}}{{cart.total}}</strong></span>
+          <button type="button" class="checkout" {{#unless cart.lines.length}}disabled{{/unless}} {{#if noBuyers}}disabled{{/if}}>{{localize "POKEMART.Checkout"}}</button>
+        </footer>
+      </section>
     {{else}}
       {{#unless sellItems.length}}<p class="notice">{{localize "POKEMART.NothingToSell"}}</p>{{/unless}}
       <ol class="pokemart-items">

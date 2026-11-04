@@ -129,3 +129,40 @@ export function sellUnitPrice(mart, item) {
   const base = entry ? entry.price : s.any ? readPrice(item) : 0;
   return Math.floor((base * s.ratio) / 100);
 }
+
+/* ---------- Free-item promotion (BOGO) ---------- */
+
+/** A mart's promotion settings, with defaults. */
+export function martBogo(mart) {
+  return {
+    enabled: !!mart?.bogoEnabled,
+    qty: Math.max(1, Math.floor(Number(mart?.bogoQty)) || 2),
+    count: Math.max(1, Math.floor(Number(mart?.bogoCount)) || 1),
+    same: mart?.bogoSame ?? true,
+    item: mart?.bogoItem?.uuid ? mart.bogoItem : null,
+    repeat: !!mart?.bogoRepeat
+  };
+}
+
+/** How many free items a purchase of `qty` earns at this mart. */
+export function bogoFreeCount(mart, qty) {
+  const b = martBogo(mart);
+  if (!b.enabled || (!b.same && !b.item) || qty < b.qty) return 0;
+  return b.repeat ? Math.floor(qty / b.qty) * b.count : b.count;
+}
+
+/**
+ * The free item a cart earns, or null. `lines` is [{ entry, qty }].
+ * The threshold counts every item in the cart. A "same item" reward is extra copies of the cheapest item in the cart.
+ */
+export function cartReward(mart, lines) {
+  const b = martBogo(mart);
+  const total = lines.reduce((n, l) => n + l.qty, 0);
+  const count = bogoFreeCount(mart, total);
+  if (!count) return null;
+  if (b.same) {
+    const cheapest = lines.reduce((a, l) => (l.entry.price < a.entry.price ? l : a));
+    return { count, uuid: cheapest.entry.uuid, name: cheapest.entry.name, inCart: true };
+  }
+  return { count, uuid: b.item.uuid, name: b.item.name, inCart: false };
+}

@@ -22,7 +22,7 @@
     </ol>
     <footer>
       <button type="button" class="add-selected" {{#unless count}}disabled{{/unless}}>
-        <i class="fas fa-plus"></i> {{localize "POKEMART.AddSelected"}} (<span class="count">{{count}}</span>)
+        <i class="fas fa-plus"></i> {{#if reward}}{{localize "POKEMART.UseAsReward"}}{{else}}{{localize "POKEMART.AddSelected"}}{{/if}} (<span class="count">{{count}}</span>)
       </button>
     </footer>
   {{/if}}

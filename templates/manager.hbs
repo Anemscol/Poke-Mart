@@ -33,6 +33,32 @@
         {{/if}}
       </div>
 
+      {{#unless sell.sellOnly}}
+      <div class="mart-bogo">
+        <label><input type="checkbox" name="bogoEnabled" {{checked bogo.enabled}}> {{localize "POKEMART.BogoEnabled"}}</label>
+        {{#if bogo.enabled}}
+        <div class="bogo-rules">
+          <label>{{localize "POKEMART.BogoBuyAtLeast"}} <input type="number" name="bogoQty" min="1" max="99" step="1" value="{{bogo.qty}}"> {{localize "POKEMART.BogoInOne"}}</label>
+          <label>{{localize "POKEMART.BogoGet"}} <input type="number" name="bogoCount" min="1" max="99" step="1" value="{{bogo.count}}"> {{localize "POKEMART.BogoFree"}}</label>
+          <label><input type="checkbox" name="bogoRepeat" {{checked bogo.repeat}}> {{localize "POKEMART.BogoRepeat"}}</label>
+          <label><input type="checkbox" name="bogoSame" {{checked bogo.same}}> {{localize "POKEMART.BogoSame"}}</label>
+        </div>
+        {{#unless bogo.same}}
+        <div class="bogo-drop">
+          {{#if bogo.item}}
+            <img src="{{bogo.item.img}}" width="28" height="28" alt="">
+            <span class="bogo-item-name">{{bogo.item.name}}</span>
+            <a class="clear-bogo-item" title="{{localize 'POKEMART.BogoClear'}}"><i class="fas fa-times"></i></a>
+          {{else}}
+            <span class="hint">{{localize "POKEMART.BogoDropHint"}}</span>
+          {{/if}}
+          <button type="button" class="pick-bogo-item"><i class="fas fa-book"></i> {{localize "POKEMART.BogoChoose"}}</button>
+        </div>
+        {{/unless}}
+        {{/if}}
+      </div>
+      {{/unless}}
+
       <div class="mart-toolbar">
         <button type="button" class="add-compendium"><i class="fas fa-book"></i> {{localize "POKEMART.AddFromCompendium"}}</button>
         <span class="hint">{{localize "POKEMART.DropHint"}}</span>

@@ -1,4 +1,4 @@
-import { MODULE_ID, openApps, getMarts, saveMarts, cfg, readPrice, rawDescription, entryFromItem, addEntries, confirmDialog, martSell, sortedMarts } from "./data.js";
+import { MODULE_ID, openApps, getMarts, saveMarts, cfg, readPrice, rawDescription, entryFromItem, addEntries, confirmDialog, martSell, martBogo, sortedMarts } from "./data.js";
 import { MartApp } from "./mart-app.js";
 
 const AppV1 = foundry.appv1?.api?.Application ?? Application;
@@ -38,6 +38,7 @@ export class ManagerApp extends AppV1 {
       marts: marts.map((m, i) => ({ ...m, selected: m.id === this.selectedId, first: i === 0, last: i === marts.length - 1 })),
       mart: marts.find((m) => m.id === this.selectedId) ?? null,
       sell: martSell(marts.find((m) => m.id === this.selectedId)),
+      bogo: martBogo(marts.find((m) => m.id === this.selectedId)),
       currency: cfg("currencySymbol")
     };
   }
@@ -90,6 +91,24 @@ export class ManagerApp extends AppV1 {
       const v = ev.currentTarget.checked;
       this._mutate((m) => (m.sellEnabled = v));
     });
+
+    const bool = (name, key) =>
+      html.find(`input[name=${name}]`).on("change", (ev) => {
+        const v = ev.currentTarget.checked;
+        this._mutate((m) => (m[key] = v));
+      });
+    const whole = (name, key) =>
+      html.find(`input[name=${name}]`).on("change", (ev) => {
+        const v = Math.min(99, Math.max(1, Math.floor(Number(ev.currentTarget.value)) || 1));
+        this._mutate((m) => (m[key] = v));
+      });
+    bool("bogoEnabled", "bogoEnabled");
+    bool("bogoRepeat", "bogoRepeat");
+    bool("bogoSame", "bogoSame");
+    whole("bogoQty", "bogoQty");
+    whole("bogoCount", "bogoCount");
+    html.find(".clear-bogo-item").on("click", () => this._mutate((m) => (m.bogoItem = null)));
+    html.find(".pick-bogo-item").on("click", () => new CompendiumPickerApp(this.selectedId, "reward").render(true));
 
     html.find("input[name=hideBuy]").on("change", (ev) => {
       const v = ev.currentTarget.checked;
@@ -167,6 +186,7 @@ export class ManagerApp extends AppV1 {
   async _onDrop(ev) {
     ev.preventDefault();
     if (!this.selectedId) return;
+    const onRewardZone = !!ev.target.closest?.(".bogo-drop");
     let data;
     try {
       data = JSON.parse(ev.dataTransfer.getData("text/plain"));
@@ -179,6 +199,9 @@ export class ManagerApp extends AppV1 {
     const item = await fromUuid(data.uuid);
     if (!item) return;
     if (item.parent) return ui.notifications.warn(game.i18n.localize("POKEMART.ItemOwned"));
+    if (onRewardZone) {
+      return this._mutate((m) => (m.bogoItem = { uuid: item.uuid, name: item.name, img: item.img }));
+    }
     const added = await addEntries(this.selectedId, [entryFromItem(item)]);
     if (!added) ui.notifications.info(game.i18n.format("POKEMART.AlreadyInMart", { item: item.name }));
   }
@@ -186,9 +209,14 @@ export class ManagerApp extends AppV1 {
 
 /** Pick one or more items from any Item compendium to add to a mart. */
 export class CompendiumPickerApp extends AppV1 {
-  constructor(martId, options = {}) {
-    super({ id: `${MODULE_ID}-picker`, ...options });
+  constructor(martId, mode = "mart", options = {}) {
+    super({
+      id: `${MODULE_ID}-picker`,
+      title: mode === "reward" ? "POKEMART.ChooseReward" : "POKEMART.AddFromCompendium",
+      ...options
+    });
     this.martId = martId;
+    this.mode = mode; // "mart": add items to the mart; "reward": pick the single free item
     this.packId = null;
     this.index = [];
     this.search = "";
@@ -231,7 +259,8 @@ export class CompendiumPickerApp extends AppV1 {
       search: this.search,
       currency: cfg("currencySymbol"),
       count: this.selected.size,
-      entries: this.index.map((e) => ({ ...e, inMart: inMart.has(e.uuid), checked: this.selected.has(e.uuid) }))
+      reward: this.mode === "reward",
+      entries: this.index.map((e) => ({ ...e, inMart: this.mode !== "reward" && inMart.has(e.uuid), checked: this.selected.has(e.uuid) }))
     };
   }
 
@@ -259,6 +288,10 @@ export class CompendiumPickerApp extends AppV1 {
 
     html.find("input.pick").on("change", (ev) => {
       const uuid = ev.currentTarget.closest(".picker-row").dataset.uuid;
+      if (this.mode === "reward" && ev.currentTarget.checked) {
+        this.selected.clear();
+        html.find("input.pick").not(ev.currentTarget).prop("checked", false);
+      }
       if (ev.currentTarget.checked) this.selected.add(uuid);
       else this.selected.delete(uuid);
       html.find(".add-selected .count").text(this.selected.size);
@@ -266,6 +299,15 @@ export class CompendiumPickerApp extends AppV1 {
     });
 
     html.find(".add-selected").on("click", async () => {
+      if (this.mode === "reward") {
+        const pick = this.index.find((e) => this.selected.has(e.uuid));
+        const marts = getMarts();
+        if (pick && marts[this.martId]) {
+          marts[this.martId].bogoItem = { uuid: pick.uuid, name: pick.name, img: pick.img };
+          await saveMarts(marts);
+        }
+        return this.close();
+      }
       const entries = this.index.filter((e) => this.selected.has(e.uuid));
       // Save each item's description with the mart entry, so players can read it even without compendium access
       await Promise.all(

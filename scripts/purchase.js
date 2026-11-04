@@ -1,45 +1,92 @@
-import { MODULE_ID, cfg, readNumber } from "./data.js";
+import { MODULE_ID, cfg, readNumber, cartReward } from "./data.js";
 
 const esc = (s) => Handlebars.escapeExpression(s);
 const warn = (k, d) => ui.notifications.warn(game.i18n.format(k, d));
 const error = (k, d) => ui.notifications.error(game.i18n.format(k, d));
 
 /**
- * Buy `qty` of a mart entry for `actor`: deduct money, then give the item(s).
- * If giving the item fails, the money is refunded.
- * @returns {Promise<boolean>} true if the purchase went through
+ * Buy everything in a cart in one purchase.
+ * Money is deducted first. Items that can't be given are refunded individually.
+ * @param lines [{ entry, qty }]
+ * @returns {Promise<{delivered: Set<string>}>} uuids of the cart lines that were delivered
  */
-export async function purchase({ entry, actor, qty }) {
+export async function checkout({ lines, actor, mart }) {
+  const none = { delivered: new Set() };
   const moneyPath = cfg("moneyPath");
   const qtyPath = cfg("quantityPath");
   const symbol = cfg("currencySymbol");
 
-  if (!actor.isOwner) return error("POKEMART.Errors.NotOwner", { actor: actor.name }), false;
+  if (!actor.isOwner) return error("POKEMART.Errors.NotOwner", { actor: actor.name }), none;
+  if (!lines.length) return none;
 
-  const total = entry.price * qty;
+  const total = lines.reduce((n, l) => n + l.entry.price * l.qty, 0);
   const money = readNumber(actor, moneyPath);
-  if (money === null) return error("POKEMART.Errors.NoMoneyField", { actor: actor.name, path: moneyPath }), false;
-  if (money < total) return warn("POKEMART.Errors.NotEnough", { total: `${symbol}${total}`, money: `${symbol}${money}` }), false;
+  if (money === null) return error("POKEMART.Errors.NoMoneyField", { actor: actor.name, path: moneyPath }), none;
+  if (money < total) return warn("POKEMART.Errors.NotEnough", { total: `${symbol}${total}`, money: `${symbol}${money}` }), none;
 
-  const source = await fromUuid(entry.uuid);
-  if (!source) return error("POKEMART.Errors.ItemMissing", { item: entry.name }), false;
-
-  await actor.update({ [moneyPath]: money - total });
-  try {
-    await grantItem(actor, source, qty, qtyPath);
-  } catch (err) {
-    console.error(`${MODULE_ID} | Could not give item, refunding`, err);
-    await actor.update({ [moneyPath]: (readNumber(actor, moneyPath) ?? 0) + total });
-    error("POKEMART.Errors.GrantFailed", { item: entry.name, actor: actor.name });
-    return false;
+  // Make sure every item still exists before any money moves
+  const sources = new Map();
+  for (const l of lines) {
+    const src = await fromUuid(l.entry.uuid).catch(() => null);
+    if (!src) return error("POKEMART.Errors.ItemMissing", { item: l.entry.name }), none;
+    sources.set(l.entry.uuid, src);
   }
 
-  const msg = game.i18n.format("POKEMART.Chat.Purchased", {
+  // Free-item promotion
+  let reward = cartReward(mart, lines);
+  let rewardSource = null;
+  if (reward) {
+    rewardSource = reward.inCart ? sources.get(reward.uuid) : await fromUuid(reward.uuid).catch(() => null);
+    if (!rewardSource) {
+      warn("POKEMART.Errors.RewardMissing", { item: reward.name });
+      reward = null;
+    }
+  }
+
+  await actor.update({ [moneyPath]: money - total });
+
+  const delivered = new Set();
+  const failed = [];
+  let refund = 0;
+  for (const l of lines) {
+    const extra = reward?.inCart && reward.uuid === l.entry.uuid ? reward.count : 0;
+    try {
+      await grantItem(actor, sources.get(l.entry.uuid), l.qty + extra, qtyPath);
+      delivered.add(l.entry.uuid);
+    } catch (err) {
+      console.error(`${MODULE_ID} | Could not give ${l.entry.name}`, err);
+      refund += l.entry.price * l.qty;
+      failed.push(l.entry.name);
+    }
+  }
+
+  let rewardLabel = null;
+  if (reward) {
+    if (reward.inCart) {
+      if (delivered.has(reward.uuid)) rewardLabel = `${reward.count}× ${reward.name}`;
+    } else if (delivered.size) {
+      try {
+        await grantItem(actor, rewardSource, reward.count, qtyPath);
+        rewardLabel = `${reward.count}× ${reward.name}`;
+      } catch (err) {
+        console.error(`${MODULE_ID} | Could not give the free item`, err);
+        error("POKEMART.Errors.RewardFailed", { item: reward.name });
+      }
+    }
+  }
+
+  if (refund > 0) await actor.update({ [moneyPath]: (readNumber(actor, moneyPath) ?? 0) + refund });
+  if (failed.length) error("POKEMART.Errors.GrantFailed", { item: failed.join(", "), actor: actor.name });
+  if (!delivered.size) return { delivered };
+
+  const bought = lines.filter((l) => delivered.has(l.entry.uuid));
+  const paid = total - refund;
+  let msg = game.i18n.format("POKEMART.Chat.Purchased", {
     actor: esc(actor.name),
-    qty,
-    item: esc(entry.name),
-    total: `${symbol}${total}`
+    items: bought.map((l) => `${l.qty}× <em>${esc(l.entry.name)}</em>`).join(", "),
+    total: `${symbol}${paid}`
   });
+  if (rewardLabel) msg += " " + game.i18n.format("POKEMART.Chat.PurchasedFree", { free: esc(rewardLabel) });
   if (cfg("chatMessages")) {
     await ChatMessage.create({
       speaker: ChatMessage.getSpeaker({ actor }),
@@ -47,8 +94,13 @@ export async function purchase({ entry, actor, qty }) {
       flags: { [MODULE_ID]: { purchase: true } }
     });
   }
-  ui.notifications.info(game.i18n.format("POKEMART.Bought", { qty, item: entry.name, total: `${symbol}${total}` }));
-  return true;
+  ui.notifications.info(
+    game.i18n.format("POKEMART.Bought", {
+      items: bought.map((l) => `${l.qty}× ${l.entry.name}`).join(", "),
+      total: `${symbol}${paid}`
+    }) + (rewardLabel ? " " + game.i18n.format("POKEMART.BoughtFree", { free: rewardLabel }) : "")
+  );
+  return { delivered };
 }
 
 /**
