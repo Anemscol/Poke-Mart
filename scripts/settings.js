@@ -23,6 +23,7 @@ export function registerSettings() {
   text("moneyPath", "system.money");
   text("pricePath", "system.price");
   text("quantityPath", "system.quantity");
+  text("descriptionPath", "system.description");
   text("currencySymbol", "₽");
 
   game.settings.register(MODULE_ID, "chatMessages", {

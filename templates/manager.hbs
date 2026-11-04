@@ -20,6 +20,14 @@
         <button type="button" class="delete-mart" title="{{localize 'POKEMART.DeleteMart'}}"><i class="fas fa-trash"></i></button>
       </div>
 
+      <div class="mart-sell">
+        <label><input type="checkbox" name="sellEnabled" {{checked sell.enabled}}> {{localize "POKEMART.SellEnabled"}}</label>
+        {{#if sell.enabled}}
+        <label>{{localize "POKEMART.SellRatio"}} <input type="number" name="sellRatio" min="0" max="100" step="1" value="{{sell.ratio}}"> %</label>
+        <label><input type="checkbox" name="sellAny" {{checked sell.any}}> {{localize "POKEMART.SellAny"}}</label>
+        {{/if}}
+      </div>
+
       <div class="mart-toolbar">
         <button type="button" class="add-compendium"><i class="fas fa-book"></i> {{localize "POKEMART.AddFromCompendium"}}</button>
         <span class="hint">{{localize "POKEMART.DropHint"}}</span>

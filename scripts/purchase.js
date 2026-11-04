@@ -51,6 +51,56 @@ export async function purchase({ entry, actor, qty }) {
   return true;
 }
 
+/**
+ * Sell `qty` of an owned item. Money is added first; if removing the item fails, it is taken back.
+ * @param unit price paid per unit
+ */
+export async function sell({ actor, itemId, qty, unit }) {
+  const moneyPath = cfg("moneyPath");
+  const qtyPath = cfg("quantityPath");
+  const symbol = cfg("currencySymbol");
+
+  if (!actor.isOwner) return error("POKEMART.Errors.NotOwner", { actor: actor.name }), false;
+  const item = actor.items.get(itemId);
+  if (!item) return error("POKEMART.Errors.ItemGone", { item: "?", actor: actor.name }), false;
+
+  const stackQty = readNumber(item, qtyPath);
+  const have = stackQty === null ? 1 : Math.floor(stackQty);
+  if (qty > have) return warn("POKEMART.Errors.NotEnoughItems", { actor: actor.name, have, item: item.name }), false;
+
+  const money = readNumber(actor, moneyPath);
+  if (money === null) return error("POKEMART.Errors.NoMoneyField", { actor: actor.name, path: moneyPath }), false;
+
+  const total = unit * qty;
+  const name = item.name;
+  await actor.update({ [moneyPath]: money + total });
+  try {
+    if (stackQty !== null && qty < have) await item.update({ [qtyPath]: have - qty });
+    else await item.delete();
+  } catch (err) {
+    console.error(`${MODULE_ID} | Could not remove sold item, reverting`, err);
+    await actor.update({ [moneyPath]: (readNumber(actor, moneyPath) ?? money + total) - total });
+    error("POKEMART.Errors.SellFailed", { item: name });
+    return false;
+  }
+
+  if (cfg("chatMessages")) {
+    const msg = game.i18n.format("POKEMART.Chat.Sold", {
+      actor: esc(actor.name),
+      qty,
+      item: esc(name),
+      total: `${symbol}${total}`
+    });
+    await ChatMessage.create({
+      speaker: ChatMessage.getSpeaker({ actor }),
+      content: `<div class="pokemart-chat"><i class="fas fa-store"></i> ${msg}</div>`,
+      flags: { [MODULE_ID]: { sale: true } }
+    });
+  }
+  ui.notifications.info(game.i18n.format("POKEMART.Sold", { qty, item: name, total: `${symbol}${total}` }));
+  return true;
+}
+
 async function grantItem(actor, source, qty, qtyPath) {
   // Stack onto an existing item if this system tracks quantities
   const existing = actor.items.find((i) => i.name === source.name && i.type === source.type);

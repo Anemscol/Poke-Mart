@@ -19,20 +19,48 @@
       {{/if}}
     </header>
 
+    {{#if sellOn}}
+    <nav class="pokemart-tabs">
+      <button type="button" class="tab {{#if isBuy}}active{{/if}}" data-tab="buy">{{localize "POKEMART.TabBuy"}}</button>
+      <button type="button" class="tab {{#if isSell}}active{{/if}}" data-tab="sell">{{localize "POKEMART.TabSell"}}</button>
+    </nav>
+    {{/if}}
+
     <input type="search" class="pokemart-search" placeholder="{{localize 'POKEMART.Search'}}" value="{{search}}">
 
-    {{#unless mart.items.length}}<p class="notice">{{localize "POKEMART.EmptyMart"}}</p>{{/unless}}
-
-    <ol class="pokemart-items">
-      {{#each items}}
-      <li class="pokemart-item" data-uuid="{{uuid}}" data-name="{{name}}">
-        <img src="{{img}}" width="36" height="36" alt="">
-        <a class="item-name">{{name}}</a>
-        <span class="price {{#if expensive}}expensive{{/if}}">{{currency}}{{price}}</span>
-        <input type="number" class="qty" value="{{qty}}" min="1" max="99" step="1" title="{{localize 'POKEMART.Quantity'}}">
-        <button type="button" class="buy">{{localize "POKEMART.Buy"}}</button>
-      </li>
-      {{/each}}
-    </ol>
+    {{#if isBuy}}
+      {{#unless mart.items.length}}<p class="notice">{{localize "POKEMART.EmptyMart"}}</p>{{/unless}}
+      <ol class="pokemart-items">
+        {{#each items}}
+        <li class="pokemart-item" data-key="{{key}}" data-name="{{name}}">
+          <div class="row">
+            <img src="{{img}}" width="36" height="36" alt="">
+            <a class="item-name" title="{{localize 'POKEMART.ShowDescription'}}">{{name}} <i class="fas fa-circle-info"></i></a>
+            <span class="price {{#if expensive}}expensive{{/if}}">{{currency}}{{price}}</span>
+            <input type="number" class="qty" value="{{qty}}" min="1" max="99" step="1" title="{{localize 'POKEMART.Quantity'}}">
+            <button type="button" class="buy">{{localize "POKEMART.Buy"}}</button>
+          </div>
+          <div class="item-desc" hidden></div>
+        </li>
+        {{/each}}
+      </ol>
+    {{else}}
+      {{#unless sellItems.length}}<p class="notice">{{localize "POKEMART.NothingToSell"}}</p>{{/unless}}
+      <ol class="pokemart-items">
+        {{#each sellItems}}
+        <li class="pokemart-item" data-key="{{key}}" data-name="{{name}}">
+          <div class="row">
+            <img src="{{img}}" width="36" height="36" alt="">
+            <a class="item-name" title="{{localize 'POKEMART.ShowDescription'}}">{{name}} <i class="fas fa-circle-info"></i></a>
+            {{#if stack}}<span class="have" title="{{localize 'POKEMART.Owned'}}">×{{have}}</span>{{/if}}
+            <span class="price">{{currency}}{{price}} <small>{{localize "POKEMART.Each"}}</small></span>
+            <input type="number" class="qty" value="{{qty}}" min="1" max="{{have}}" step="1" title="{{localize 'POKEMART.Quantity'}}">
+            <button type="button" class="sell">{{localize "POKEMART.Sell"}}</button>
+          </div>
+          <div class="item-desc" hidden></div>
+        </li>
+        {{/each}}
+      </ol>
+    {{/if}}
   {{/if}}
 </section>

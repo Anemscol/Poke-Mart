@@ -1,4 +1,4 @@
-import { MODULE_ID, openApps, getMarts, saveMarts, cfg, readPrice, entryFromItem, addEntries, confirmDialog } from "./data.js";
+import { MODULE_ID, openApps, getMarts, saveMarts, cfg, readPrice, rawDescription, entryFromItem, addEntries, confirmDialog, martSell } from "./data.js";
 import { MartApp } from "./mart-app.js";
 
 const AppV1 = foundry.appv1?.api?.Application ?? Application;
@@ -37,6 +37,7 @@ export class ManagerApp extends AppV1 {
     return {
       marts: marts.map((m) => ({ ...m, selected: m.id === this.selectedId })),
       mart: marts.find((m) => m.id === this.selectedId) ?? null,
+      sell: martSell(marts.find((m) => m.id === this.selectedId)),
       currency: cfg("currencySymbol")
     };
   }
@@ -76,6 +77,21 @@ export class ManagerApp extends AppV1 {
     html.find("input[name=open]").on("change", (ev) => {
       const v = ev.currentTarget.checked;
       this._mutate((m) => (m.open = v));
+    });
+
+    html.find("input[name=sellEnabled]").on("change", (ev) => {
+      const v = ev.currentTarget.checked;
+      this._mutate((m) => (m.sellEnabled = v));
+    });
+
+    html.find("input[name=sellRatio]").on("change", (ev) => {
+      const v = Math.min(100, Math.max(0, Math.round(Number(ev.currentTarget.value) || 0)));
+      this._mutate((m) => (m.sellRatio = v));
+    });
+
+    html.find("input[name=sellAny]").on("change", (ev) => {
+      const v = ev.currentTarget.checked;
+      this._mutate((m) => (m.sellAny = v));
     });
 
     html.find(".price-input").on("change", (ev) => {
@@ -227,6 +243,16 @@ export class CompendiumPickerApp extends AppV1 {
 
     html.find(".add-selected").on("click", async () => {
       const entries = this.index.filter((e) => this.selected.has(e.uuid));
+      // Save each item's description with the mart entry, so players can read it even without compendium access
+      await Promise.all(
+        entries.map(async (e) => {
+          try {
+            e.desc = rawDescription(await fromUuid(e.uuid));
+          } catch (err) {
+            /* leave it empty */
+          }
+        })
+      );
       const added = await addEntries(this.martId, entries);
       ui.notifications.info(game.i18n.format("POKEMART.Added", { count: added }));
       this.close();
