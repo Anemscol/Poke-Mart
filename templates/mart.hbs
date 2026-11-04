@@ -1,0 +1,38 @@
+<section class="pokemart-wrap">
+  {{#if missing}}
+    <p class="notice">{{localize "POKEMART.MartMissing"}}</p>
+  {{else if closed}}
+    <p class="notice"><i class="fas fa-lock"></i> {{localize "POKEMART.Closed"}}</p>
+  {{else}}
+    <header class="pokemart-header">
+      <h2>{{mart.name}}</h2>
+      {{#if gmClosed}}<p class="notice warn">{{localize "POKEMART.GMClosedNote"}}</p>{{/if}}
+      {{#if noBuyers}}
+        <p class="notice warn">{{localize "POKEMART.NoBuyers" path=moneyPath}}</p>
+      {{else}}
+        <div class="buyer">
+          <select name="actor">
+            {{#each buyers}}<option value="{{id}}" {{#if selected}}selected{{/if}}>{{name}}</option>{{/each}}
+          </select>
+          <div class="wallet"><i class="fas fa-coins"></i> {{currency}}{{money}}</div>
+        </div>
+      {{/if}}
+    </header>
+
+    <input type="search" class="pokemart-search" placeholder="{{localize 'POKEMART.Search'}}" value="{{search}}">
+
+    {{#unless mart.items.length}}<p class="notice">{{localize "POKEMART.EmptyMart"}}</p>{{/unless}}
+
+    <ol class="pokemart-items">
+      {{#each items}}
+      <li class="pokemart-item" data-uuid="{{uuid}}" data-name="{{name}}">
+        <img src="{{img}}" width="36" height="36" alt="">
+        <a class="item-name">{{name}}</a>
+        <span class="price {{#if expensive}}expensive{{/if}}">{{currency}}{{price}}</span>
+        <input type="number" class="qty" value="{{qty}}" min="1" max="99" step="1" title="{{localize 'POKEMART.Quantity'}}">
+        <button type="button" class="buy">{{localize "POKEMART.Buy"}}</button>
+      </li>
+      {{/each}}
+    </ol>
+  {{/if}}
+</section>

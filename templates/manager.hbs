@@ -1,0 +1,53 @@
+<div class="pokemart-manager">
+  <aside class="mart-list">
+    <button type="button" class="new-mart"><i class="fas fa-plus"></i> {{localize "POKEMART.NewMart"}}</button>
+    <ul>
+      {{#each marts}}
+      <li class="mart-entry {{#if selected}}active{{/if}}" data-mart-id="{{id}}">
+        <span>{{name}}</span>
+        {{#unless open}}<i class="fas fa-lock" title="{{localize 'POKEMART.Closed'}}"></i>{{/unless}}
+      </li>
+      {{/each}}
+    </ul>
+  </aside>
+
+  <section class="mart-editor">
+    {{#if mart}}
+      <div class="mart-settings">
+        <input type="text" name="name" value="{{mart.name}}">
+        <label class="open-toggle"><input type="checkbox" name="open" {{checked mart.open}}> {{localize "POKEMART.OpenToPlayers"}}</label>
+        <button type="button" class="preview-mart" title="{{localize 'POKEMART.Preview'}}"><i class="fas fa-eye"></i></button>
+        <button type="button" class="delete-mart" title="{{localize 'POKEMART.DeleteMart'}}"><i class="fas fa-trash"></i></button>
+      </div>
+
+      <div class="mart-toolbar">
+        <button type="button" class="add-compendium"><i class="fas fa-book"></i> {{localize "POKEMART.AddFromCompendium"}}</button>
+        <span class="hint">{{localize "POKEMART.DropHint"}}</span>
+      </div>
+
+      {{#unless mart.items.length}}
+        <p class="notice">{{localize "POKEMART.EmptyManager"}}</p>
+      {{else}}
+        <div class="table-scroll">
+          <table class="mart-items">
+            <thead>
+              <tr><th></th><th>{{localize "POKEMART.Item"}}</th><th>{{localize "POKEMART.Price"}} ({{currency}})</th><th></th></tr>
+            </thead>
+            <tbody>
+              {{#each mart.items}}
+              <tr data-uuid="{{uuid}}">
+                <td class="img"><img src="{{img}}" width="28" height="28" alt=""></td>
+                <td class="name"><a class="open-item">{{name}}</a></td>
+                <td class="price"><input type="number" class="price-input" min="0" step="1" value="{{price}}"></td>
+                <td class="actions"><a class="remove-item" title="{{localize 'POKEMART.Remove'}}"><i class="fas fa-trash"></i></a></td>
+              </tr>
+              {{/each}}
+            </tbody>
+          </table>
+        </div>
+      {{/unless}}
+    {{else}}
+      <p class="notice">{{localize "POKEMART.NoMartsManager"}}</p>
+    {{/if}}
+  </section>
+</div>

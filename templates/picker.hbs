@@ -1,0 +1,29 @@
+<div class="pokemart-picker">
+  {{#if noPacks}}
+    <p class="notice">{{localize "POKEMART.NoPacks"}}</p>
+  {{else}}
+    <div class="picker-controls">
+      <select name="pack">
+        {{#each packs}}<option value="{{id}}" {{#if selected}}selected{{/if}}>{{title}}</option>{{/each}}
+      </select>
+      <input type="search" class="picker-search" placeholder="{{localize 'POKEMART.Search'}}" value="{{search}}">
+    </div>
+    <ol class="picker-list">
+      {{#each entries}}
+      <li class="picker-row" data-uuid="{{uuid}}" data-name="{{name}}">
+        <label>
+          <input type="checkbox" class="pick" {{#if checked}}checked{{/if}} {{#if inMart}}disabled{{/if}}>
+          <img src="{{img}}" width="28" height="28" alt="">
+          <span class="name">{{name}}</span>
+        </label>
+        {{#if inMart}}<span class="in-mart">{{localize "POKEMART.InMart"}}</span>{{else}}<span class="price">{{currency}}{{price}}</span>{{/if}}
+      </li>
+      {{/each}}
+    </ol>
+    <footer>
+      <button type="button" class="add-selected" {{#unless count}}disabled{{/unless}}>
+        <i class="fas fa-plus"></i> {{localize "POKEMART.AddSelected"}} (<span class="count">{{count}}</span>)
+      </button>
+    </footer>
+  {{/if}}
+</div>
