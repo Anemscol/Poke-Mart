@@ -65,8 +65,11 @@ export class MartApp extends AppV1 {
     const actor = game.actors.get(this.actorId);
     const money = actor ? readNumber(actor, moneyPath) ?? 0 : 0;
 
-    const sellOn = martSell(mart).enabled;
+    const sellCfg = martSell(mart);
+    const sellOn = sellCfg.enabled;
+    const sellOnly = sellCfg.sellOnly;
     if (!sellOn) this.tab = "buy";
+    else if (sellOnly) this.tab = "sell";
 
     let sellItems = [];
     if (sellOn && actor && this.tab === "sell") {
@@ -102,6 +105,7 @@ export class MartApp extends AppV1 {
       buyers: buyers.map((a) => ({ id: a.id, name: a.name, selected: a.id === this.actorId })),
       search: this.search,
       sellOn,
+      showTabs: sellOn && !sellOnly,
       isBuy: this.tab === "buy",
       isSell: this.tab === "sell",
       items: (mart?.items ?? []).map((e) => ({

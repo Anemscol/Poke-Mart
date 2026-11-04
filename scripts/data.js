@@ -14,6 +14,15 @@ export function getMarts() {
   return foundry.utils.deepClone(game.settings.get(MODULE_ID, "marts") ?? {});
 }
 
+/** Marts in the order the GM arranged them (unarranged marts last, by name). */
+export function sortedMarts(marts = getMarts()) {
+  return Object.values(marts).sort((a, b) => {
+    const ao = Number.isFinite(a.order) ? a.order : Infinity;
+    const bo = Number.isFinite(b.order) ? b.order : Infinity;
+    return ao === bo ? a.name.localeCompare(b.name) : ao - bo;
+  });
+}
+
 export function saveMarts(marts) {
   return game.settings.set(MODULE_ID, "marts", marts);
 }
@@ -101,7 +110,8 @@ export function martSell(mart) {
   return {
     enabled: !!mart?.sellEnabled,
     ratio: Number.isFinite(ratio) ? Math.min(100, Math.max(0, Math.round(ratio))) : 50,
-    any: mart?.sellAny ?? true
+    any: mart?.sellAny ?? true,
+    sellOnly: !!mart?.sellEnabled && !!mart?.hideBuy
   };
 }
 

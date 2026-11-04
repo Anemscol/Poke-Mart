@@ -18,6 +18,11 @@ In a mart's editor, tick **Buy items back from players**. Then set what percenta
 - With **Also buy items this mart doesn't sell** ticked, other items are bought at that percentage of their own price field. Items with no price (such as moves and abilities) are never offered.
 - Players get a **Sell** tab. Selling takes the item off the sheet (or lowers its quantity) and adds the money.
 
+**Sell-only marts:** with buy-back on, tick **Sell only (hide the Buy tab)** to make a mart players can only sell to. Such a mart needs no items listed; tick *Also buy items this mart doesn't sell* so it pays each item's own price.
+
+## Mart order
+Use the up/down arrows next to each mart in the manager. That order is the one players see in the "Choose a Mart" popup.
+
 ## Descriptions
 Players can click any item name, in the Buy or Sell tab, to show or hide its description. The description is read from the item's description field (see settings) and is also saved with each mart item when the GM adds it, so players can read it even without access to the compendium.
 

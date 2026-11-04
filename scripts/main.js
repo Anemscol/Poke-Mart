@@ -1,4 +1,4 @@
-import { MODULE_ID, getMarts, openApps } from "./data.js";
+import { MODULE_ID, sortedMarts, openApps } from "./data.js";
 import { registerSettings } from "./settings.js";
 import { MartApp } from "./mart-app.js";
 import { ManagerApp } from "./manager-app.js";
@@ -28,7 +28,7 @@ async function chooseMart(marts) {
 
 /** Open a mart. Without an id: the only visible mart, or a picker if there are several. */
 async function openMart(martId) {
-  const visible = Object.values(getMarts()).filter((m) => game.user.isGM || m.open);
+  const visible = sortedMarts().filter((m) => game.user.isGM || m.open);
   if (!visible.length) return ui.notifications.info(T("POKEMART.NoMarts"));
 
   let id = martId;
